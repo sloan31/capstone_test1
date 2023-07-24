@@ -1,6 +1,6 @@
 
 
-var map = L.map('map').setView([47.2679938, -122.474796], 17);
+var map = L.map('map').setView([48.5087108, -122.6333888], 17);
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
     maxZoom: 18,
@@ -11,17 +11,45 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(map);
 
 
+// Create a custom control that includes buttons and a container for the text
+var myControl = L.Control.extend({
+    options: {
+        position: 'topleft'
+    },
+
+    onAdd: function (map) {
+        // Create a container for the control
+        var container = L.DomUtil.create('div', 'my-control');
+
+        // Create a button for the "Geolocation" feature and add it to the container
+        var button = L.DomUtil.create('button', 'my-button', container);
+        button.innerHTML = 'Geolocation';
+
+        // Add a click event listener to the "Geolocation" button to start geolocation tracking
+        L.DomEvent.addListener(button, 'click', function () {
+            if(!navigator.geolocation) {
+                console.log("browser b bitchin")
+            } else {
+                setInterval(() => {
+                navigator.geolocation.getCurrentPosition(getPosition)
+                }, 5000);
+            }
+        
+        });
+
+        return container;
+    }
+});
+
+// Add the custom control to the map
+map.addControl(new myControl());
+
+
 // Global variable to hold the polyline
 var userPath = L.polyline([], { color: 'blue' }).addTo(map);
 
+var firstPosition = true;
 
-if(!navigator.geolocation) {
-    console.log("browser b bitchin")
-} else {
-    setInterval(() => {
-    navigator.geolocation.getCurrentPosition(getPosition)
-    }, 5000);
-}
 
 function getPosition(position){
     // console.log(position)
@@ -32,14 +60,17 @@ function getPosition(position){
     // Update the polyline with the user's latest coordinates
     userPath.addLatLng([lat, long]);
 
-    var marker = L.marker([lat, long]).addTo(map)
-    var circle = L.circle([lat, long], {radius: accuracy }).addTo(map)
+  
+    // If it's the first position update, display marker and circle
+    if (firstPosition) {
+        map.setView([lat, long], 17); 
+        var marker = L.marker([lat, long]).addTo(map);
+        var circle = L.circle([lat, long], { radius: accuracy }).addTo(map);
+        firstPosition = false; // Set the flag to false after the first position update
+    }
 
     console.log(lat, long, accuracy)
 }
-
-
-
 
 
 
