@@ -32,7 +32,7 @@ var myControl = L.Control.extend({
             } else {
                 setInterval(() => {
                 navigator.geolocation.getCurrentPosition(getPosition)
-                }, 5000);
+                }, 2000);
             }
         
         });
