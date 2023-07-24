@@ -12,66 +12,83 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 
 
 // Create a custom control that includes buttons and a container for the text
-var myControl = L.Control.extend({
-    options: {
-        position: 'topleft'
-    },
+        var myControl = L.Control.extend({
+            options: {
+                position: 'topleft'
+            },
 
-    onAdd: function (map) {
-        // Create a container for the control
-        var container = L.DomUtil.create('div', 'my-control');
+            onAdd: function (map) {
+                // Create a container for the control
+                var container = L.DomUtil.create('div', 'my-control');
 
-        // Create a button for the "Geolocation" feature and add it to the container
-        var button = L.DomUtil.create('button', 'my-button', container);
-        button.innerHTML = 'Geolocation';
+                // Create a button for the "Geolocation" feature and add it to the container
+                var button = L.DomUtil.create('button', 'my-button', container);
+                button.innerHTML = 'Geolocation';
 
-        // Add a click event listener to the "Geolocation" button to start geolocation tracking
-        L.DomEvent.addListener(button, 'click', function () {
-            if(!navigator.geolocation) {
-                console.log("browser b bitchin")
-            } else {
-                setInterval(() => {
-                navigator.geolocation.getCurrentPosition(getPosition)
-                }, 2000);
+                // Add a click event listener to the "Geolocation" button to start geolocation tracking
+                L.DomEvent.addListener(button, 'click', startGeolocation);
+
+                // Create a button for "Stop Geolocation" and add it to the container
+                var stopButton = L.DomUtil.create('button', 'my-button', container);
+                stopButton.innerHTML = 'Stop Geolocation';
+                stopButton.style.display = 'none'; // Hide the button by default
+
+                // Add a click event listener to the "Stop Geolocation" button to stop geolocation tracking
+                L.DomEvent.addListener(stopButton, 'click', stopGeolocation);
+
+                return container;
             }
-        
         });
 
-        return container;
-    }
-});
+        // Add the custom control to the map
+        map.addControl(new myControl());
 
-// Add the custom control to the map
-map.addControl(new myControl());
+        // Global variable to hold the polyline
+        var userPath = L.polyline([], { color: 'blue' }).addTo(map);
 
+        var firstPosition = true;
+        var geolocationInterval;
 
-// Global variable to hold the polyline
-var userPath = L.polyline([], { color: 'blue' }).addTo(map);
+        function startGeolocation() {
+            if (!navigator.geolocation) {
+                console.log("browser b bitchin");
+            } else {
+                geolocationInterval = setInterval(() => {
+                    navigator.geolocation.getCurrentPosition(getPosition);
+                }, 2000);
+            }
 
-var firstPosition = true;
+            // Hide "Geolocation" button and show "Stop Geolocation" button
+            document.querySelector('.my-button').style.display = 'none';
+            document.querySelectorAll('.my-button')[1].style.display = 'block';
+        }
 
+        function stopGeolocation() {
+            clearInterval(geolocationInterval);
 
-function getPosition(position){
-    // console.log(position)
-    var lat = position.coords.latitude
-    var long = position.coords.longitude 
-    var accuracy = position.coords.accuracy
+            // Show "Geolocation" button and hide "Stop Geolocation" button
+            document.querySelector('.my-button').style.display = 'block';
+            document.querySelectorAll('.my-button')[1].style.display = 'none';
+        }
 
-    // Update the polyline with the user's latest coordinates
-    userPath.addLatLng([lat, long]);
+        function getPosition(position) {
+            var lat = position.coords.latitude;
+            var long = position.coords.longitude;
+            var accuracy = position.coords.accuracy;
 
-  
-    // If it's the first position update, display marker and circle
-    if (firstPosition) {
-        map.setView([lat, long], 17); 
-        var marker = L.marker([lat, long]).addTo(map);
-        var circle = L.circle([lat, long], { radius: accuracy }).addTo(map);
-        firstPosition = false; // Set the flag to false after the first position update
-    }
+            // Update the polyline with the user's latest coordinates
+            userPath.addLatLng([lat, long]);
 
-    console.log(lat, long, accuracy)
-}
+            // If it's the first position update, display marker and circle
+            if (firstPosition) {
+                map.setView([lat, long], 17);
+                var marker = L.marker([lat, long]).addTo(map);
+                var circle = L.circle([lat, long], { radius: accuracy }).addTo(map);
+                firstPosition = false; // Set the flag to false after the first position update
+            }
 
+            console.log(lat, long, accuracy);
+        }
 
 
 
